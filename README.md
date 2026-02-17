@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Smart Bookmark App
 
-## Getting Started
+Next.js App Router app using Supabase for:
+- Google OAuth login (no password auth)
+- Private per-user bookmarks
+- Realtime bookmark updates across open tabs
+- Bookmark deletion
 
-First, run the development server:
+## Tech stack
+- Next.js (App Router)
+- Supabase Auth + Postgres + Realtime
+- Tailwind CSS
 
+## Local setup
+1. Install dependencies:
+```bash
+npm install
+```
+2. Create `.env.local` from `.env.example` and set:
+```bash
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+```
+3. In Supabase SQL editor, run `supabase/schema.sql`.
+4. In Supabase dashboard:
+- `Authentication -> Providers -> Email`: disable Email provider.
+- `Authentication -> Providers -> Google`: enable Google provider and add your Google client ID/secret.
+- `Authentication -> URL Configuration`: add callback URLs for local and production (example: `http://localhost:3000`, `https://your-vercel-url.vercel.app`).
+5. Run the app:
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deploy to Vercel
+1. Push project to GitHub.
+2. Import repo in Vercel.
+3. Set environment variables in Vercel project settings:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+4. Deploy.
+5. Copy deployed URL and add it to Supabase Auth URL configuration + Google OAuth allowed redirect origins.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Notes on privacy and realtime
+- The `bookmarks` table is protected by Row Level Security (RLS): users can only select/insert/delete rows where `user_id = auth.uid()`.
+- Realtime is enabled on `public.bookmarks` via publication `supabase_realtime`.
