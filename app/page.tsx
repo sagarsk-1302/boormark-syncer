@@ -2,6 +2,7 @@
 
 import type { Session } from "@supabase/supabase-js";
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { AuthControls } from "@/app/components/auth-controls";
 import { supabase } from "@/lib/supabase-browser";
 
 type Bookmark = {
@@ -36,7 +37,6 @@ export default function Home() {
   const [url, setUrl] = useState("");
   const [isLoadingBookmarks, setIsLoadingBookmarks] = useState(false);
   const [isSavingBookmark, setIsSavingBookmark] = useState(false);
-  const [isSigningIn, setIsSigningIn] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -130,30 +130,6 @@ export default function Home() {
     };
   }, [fetchBookmarks, userId]);
 
-  const handleGoogleSignIn = async () => {
-    setIsSigningIn(true);
-    setErrorMessage(null);
-
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin,
-      },
-    });
-
-    if (error) {
-      setErrorMessage(error.message);
-      setIsSigningIn(false);
-    }
-  };
-
-  const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      setErrorMessage(error.message);
-    }
-  };
-
   const handleAddBookmark = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -226,24 +202,7 @@ export default function Home() {
             </p>
           </div>
 
-          {session ? (
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-50"
-            >
-              Sign out
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={isSigningIn}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isSigningIn ? "Redirecting..." : "Continue with Google"}
-            </button>
-          )}
+          <AuthControls session={session} onError={setErrorMessage} />
         </header>
 
         {session && (
