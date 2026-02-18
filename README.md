@@ -43,3 +43,9 @@ npm run dev
 ## Notes on privacy and realtime
 - The `bookmarks` table is protected by Row Level Security (RLS): users can only select/insert/delete rows where `user_id = auth.uid()`.
 - Realtime is enabled on `public.bookmarks` via publication `supabase_realtime`.
+
+
+## Challenges that were faced during this assignment
+- It took a while to generate the secret and client ID from the google cloud console for the OAuth Sign In
+- The realtime listener did not work the first time. The generated code used some different socket connection which upon realised that supabase library provides it already.
+- Had to add a vercel.json file to explicitly mention to use index.html from the build as it is app based and not pages based.
