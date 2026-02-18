@@ -1,40 +1,20 @@
 "use client";
 
 import type { Session } from "@supabase/supabase-js";
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AuthControls } from "@/app/components/auth-controls";
+import { BookmarkForm } from "@/app/components/bookmark-form";
 import {
   type Bookmark,
   deleteBookmarkQuery,
   fetchBookmarksQuery,
-  insertBookmarkQuery,
 } from "@/lib/queries/bookmarks-queries";
 import { supabase } from "@/lib/supabase-browser";
-
-const normalizeUrl = (value: string): string | null => {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    return null;
-  }
-
-  const candidate = /^https?:\/\//i.test(trimmed)
-    ? trimmed
-    : `https://${trimmed}`;
-
-  try {
-    return new URL(candidate).toString();
-  } catch {
-    return null;
-  }
-};
 
 export default function Home() {
   const [session, setSession] = useState<Session | null>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
-  const [title, setTitle] = useState("");
-  const [url, setUrl] = useState("");
   const [isLoadingBookmarks, setIsLoadingBookmarks] = useState(false);
-  const [isSavingBookmark, setIsSavingBookmark] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -125,47 +105,6 @@ export default function Home() {
     };
   }, [fetchBookmarks, userId]);
 
-  const handleAddBookmark = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!userId) {
-      setErrorMessage("Please sign in first.");
-      return;
-    }
-
-    const normalized = normalizeUrl(url);
-    const trimmedTitle = title.trim();
-
-    if (!trimmedTitle) {
-      setErrorMessage("Title is required.");
-      return;
-    }
-
-    if (!normalized) {
-      setErrorMessage("Please enter a valid URL.");
-      return;
-    }
-
-    setIsSavingBookmark(true);
-    setErrorMessage(null);
-
-    const { error } = await insertBookmarkQuery({
-      title: trimmedTitle,
-      url: normalized,
-      userId,
-    });
-
-    if (error) {
-      setErrorMessage(error.message);
-    } else {
-      setTitle("");
-      setUrl("");
-      await fetchBookmarks();
-    }
-
-    setIsSavingBookmark(false);
-  };
-
   const handleDeleteBookmark = async (bookmarkId: string) => {
     setDeletingId(bookmarkId);
     setErrorMessage(null);
@@ -211,29 +150,11 @@ export default function Home() {
 
         {session ? (
           <>
-            <form onSubmit={handleAddBookmark} className="mb-6 grid gap-3">
-              <input
-                type="text"
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                placeholder="Bookmark title"
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-slate-300 focus:ring"
-              />
-              <input
-                type="text"
-                value={url}
-                onChange={(event) => setUrl(event.target.value)}
-                placeholder="https://example.com"
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-slate-300 focus:ring"
-              />
-              <button
-                type="submit"
-                disabled={isSavingBookmark}
-                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isSavingBookmark ? "Saving..." : "Add bookmark"}
-              </button>
-            </form>
+            <BookmarkForm
+              userId={session.user.id}
+              onError={setErrorMessage}
+              onBookmarkAdded={fetchBookmarks}
+            />
 
             <section>
               <h2 className="mb-3 text-lg font-semibold">Your bookmarks</h2>
