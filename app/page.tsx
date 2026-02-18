@@ -3,15 +3,13 @@
 import type { Session } from "@supabase/supabase-js";
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { AuthControls } from "@/app/components/auth-controls";
+import {
+  type Bookmark,
+  deleteBookmarkQuery,
+  fetchBookmarksQuery,
+  insertBookmarkQuery,
+} from "@/lib/queries/bookmarks-queries";
 import { supabase } from "@/lib/supabase-browser";
-
-type Bookmark = {
-  id: string;
-  title: string;
-  url: string;
-  created_at: string;
-  user_id: string;
-};
 
 const normalizeUrl = (value: string): string | null => {
   const trimmed = value.trim();
@@ -51,10 +49,7 @@ export default function Home() {
     setIsLoadingBookmarks(true);
     setErrorMessage(null);
 
-    const { data, error } = await supabase
-      .from("bookmarks")
-      .select("id, title, url, created_at, user_id")
-      .order("created_at", { ascending: false });
+    const { data, error } = await fetchBookmarksQuery();
 
     if (error) {
       setErrorMessage(error.message);
@@ -154,10 +149,10 @@ export default function Home() {
     setIsSavingBookmark(true);
     setErrorMessage(null);
 
-    const { error } = await supabase.from("bookmarks").insert({
+    const { error } = await insertBookmarkQuery({
       title: trimmedTitle,
       url: normalized,
-      user_id: userId,
+      userId,
     });
 
     if (error) {
@@ -175,10 +170,7 @@ export default function Home() {
     setDeletingId(bookmarkId);
     setErrorMessage(null);
 
-    const { error } = await supabase
-      .from("bookmarks")
-      .delete()
-      .eq("id", bookmarkId);
+    const { error } = await deleteBookmarkQuery(bookmarkId);
 
     if (error) {
       setErrorMessage(error.message);
